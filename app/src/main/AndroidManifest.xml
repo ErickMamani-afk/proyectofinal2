@@ -23,6 +23,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ProyectoFinal">
         <activity
+            android:name=".RestaurantDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".AddRestaurantActivity"
             android:exported="false" />
         <activity
