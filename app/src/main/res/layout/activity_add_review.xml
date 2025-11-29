@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:gravity="center_horizontal">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Nueva Reseña"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="20dp"/>
+
+    <ImageView
+        android:id="@+id/imageViewFoto"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:src="@android:drawable/ic_menu_camera"
+        android:background="#E0E0E0"
+        android:scaleType="centerCrop"
+        android:layout_marginBottom="10dp"/>
+
+    <Button
+        android:id="@+id/btnTomarFoto"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tomar Foto del Plato"
+        android:layout_marginBottom="20dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Calificación:"
+        android:layout_marginBottom="5dp"/>
+
+    <RatingBar
+        android:id="@+id/ratingBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:numStars="5"
+        android:stepSize="0.5"
+        android:rating="3.0"
+        android:layout_marginBottom="20dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Escribe tu opinión aquí...">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etComentario"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textMultiLine"
+            android:lines="3"
+            android:gravity="top"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <Button
+        android:id="@+id/btnGuardar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Guardar Reseña"
+        android:backgroundTint="#4CAF50"
+        android:textColor="#FFFFFF"/>
+
+</LinearLayout>
