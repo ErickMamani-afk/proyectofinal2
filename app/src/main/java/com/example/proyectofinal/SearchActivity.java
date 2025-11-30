@@ -1,17 +1,23 @@
 package com.example.proyectofinal;
 
-import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
-import android.view.View;
+import android.text.Editable;
+import android.text.TextWatcher; // Importante para búsqueda en tiempo real
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class SearchActivity extends AppCompatActivity {
@@ -22,87 +28,141 @@ public class SearchActivity extends AppCompatActivity {
     private RestaurantAdapter adapter;
     private List<Restaurant> searchResults;
     private DatabaseHelper dbHelper;
+    private FusedLocationProviderClient fusedLocationClient;
+
+    // Ubicación por defecto (se actualizará con tu GPS real)
+    private double miLat = -20.2170;
+    private double miLng = -70.1520;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_search); // Asegúrate de que este nombre coincida con tu XML
+        setContentView(R.layout.activity_search);
 
-        // Inicializar base de datos y lista
         dbHelper = new DatabaseHelper(this);
         searchResults = new ArrayList<>();
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        // Referencias a la interfaz (Los IDs deben coincidir con activity_search.xml)
         etSearchQuery = findViewById(R.id.etSearchQuery);
         btnSearchAction = findViewById(R.id.btnSearchAction);
         rvSearchResults = findViewById(R.id.rvSearchResults);
 
-        // Configurar RecyclerView
         rvSearchResults.setLayoutManager(new LinearLayoutManager(this));
         adapter = new RestaurantAdapter(this, searchResults);
         rvSearchResults.setAdapter(adapter);
 
-        // Lógica del Botón Buscar
-        btnSearchAction.setOnClickListener(new View.OnClickListener() {
+        // 1. Obtener GPS y cargar lista AUTOMÁTICAMENTE al abrir
+        obtenerUbicacionGPS();
+
+        // 2. Búsqueda manual con Botón
+        btnSearchAction.setOnClickListener(v -> {
+            String query = etSearchQuery.getText().toString().trim();
+            performSearch(query);
+        });
+
+        // 3. OPCIONAL: Búsqueda automática mientras escribes (Tiempo real)
+        etSearchQuery.addTextChangedListener(new TextWatcher() {
             @Override
-            public void onClick(View v) {
-                String query = etSearchQuery.getText().toString().trim();
-                if (!query.isEmpty()) {
-                    performSearch(query);
-                } else {
-                    Toast.makeText(SearchActivity.this, "Escribe algo para buscar", Toast.LENGTH_SHORT).show();
-                }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                performSearch(s.toString()); // Busca cada vez que escribes una letra
             }
+            @Override
+            public void afterTextChanged(Editable s) {}
         });
     }
 
+    private void obtenerUbicacionGPS() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 99);
+            return;
+        }
+
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, location -> {
+                    if (location != null) {
+                        miLat = location.getLatitude();
+                        miLng = location.getLongitude();
+                        // Al tener el GPS, actualizamos la lista vacía ("") para mostrar TODO lo cercano
+                        performSearch("");
+                    } else {
+                        // Si falla el GPS, cargamos igual con la ubicación por defecto
+                        performSearch("");
+                    }
+                });
+    }
+
     private void performSearch(String query) {
-        searchResults.clear(); // Limpiar búsquedas anteriores
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        searchResults.clear();
+        android.database.Cursor cursor = dbHelper.getAllRestaurants();
 
-        // Consulta SQL: SELECT * FROM restaurantes WHERE nombre LIKE '%query%'
-        // El símbolo % sirve para buscar texto que contenga la palabra
-        String selection = DatabaseHelper.COL_NOMBRE + " LIKE ?";
-        String[] selectionArgs = new String[]{"%" + query + "%"};
-
-        Cursor cursor = db.query(
-                DatabaseHelper.TABLE_REST, // Tabla
-                null,                      // Columnas (null = todas)
-                selection,                 // WHERE
-                selectionArgs,             // Argumentos
-                null,
-                null,
-                null
-        );
+        String queryMinuscula = query.toLowerCase(); // Para ignorar mayúsculas/minúsculas
 
         if (cursor != null && cursor.moveToFirst()) {
             do {
-                // Extraer datos de forma segura
-                int idIndex = cursor.getColumnIndex(DatabaseHelper.COL_ID);
-                int nameIndex = cursor.getColumnIndex(DatabaseHelper.COL_NOMBRE);
-                int typeIndex = cursor.getColumnIndex(DatabaseHelper.COL_TIPO);
-                int latIndex = cursor.getColumnIndex(DatabaseHelper.COL_LAT);
-                int lngIndex = cursor.getColumnIndex(DatabaseHelper.COL_LNG);
+                int idxId = cursor.getColumnIndex(DatabaseHelper.COL_ID);
+                int idxNombre = cursor.getColumnIndex(DatabaseHelper.COL_NOMBRE);
+                int idxTipo = cursor.getColumnIndex(DatabaseHelper.COL_TIPO);
+                int idxLat = cursor.getColumnIndex(DatabaseHelper.COL_LAT);
+                int idxLng = cursor.getColumnIndex(DatabaseHelper.COL_LNG);
 
-                if (idIndex != -1 && nameIndex != -1) {
-                    int id = cursor.getInt(idIndex);
-                    String name = cursor.getString(nameIndex);
-                    String type = (typeIndex != -1) ? cursor.getString(typeIndex) : "";
-                    double lat = (latIndex != -1) ? cursor.getDouble(latIndex) : 0;
-                    double lng = (lngIndex != -1) ? cursor.getDouble(lngIndex) : 0;
+                if (idxNombre != -1) {
+                    String nombre = cursor.getString(idxNombre);
+                    String tipo = cursor.getString(idxTipo); // Ej: "Pizzería", "Comida China"
 
-                    searchResults.add(new Restaurant(id, name, type, lat, lng));
+                    // --- LÓGICA DE FILTRADO MEJORADA ---
+                    // Aceptamos si:
+                    // 1. La búsqueda está vacía (Muestra todo)
+                    // 2. El NOMBRE contiene lo escrito (Ej: "Domino's")
+                    // 3. El TIPO contiene lo escrito (Ej: "Pizza")
+                    if (query.isEmpty() ||
+                            nombre.toLowerCase().contains(queryMinuscula) ||
+                            tipo.toLowerCase().contains(queryMinuscula)) {
+
+                        int id = cursor.getInt(idxId);
+                        double lat = cursor.getDouble(idxLat);
+                        double lng = cursor.getDouble(idxLng);
+
+                        Restaurant rest = new Restaurant(id, nombre, tipo, lat, lng);
+
+                        // Calcular distancia
+                        float[] results = new float[1];
+                        Location.distanceBetween(miLat, miLng, lat, lng, results);
+                        float distanciaMetros = results[0];
+
+                        // Formatear texto de distancia
+                        if (distanciaMetros < 1000) {
+                            rest.setDistanciaStr(String.format("A %.0f metros", distanciaMetros));
+                        } else {
+                            rest.setDistanciaStr(String.format("A %.1f km", distanciaMetros / 1000));
+                        }
+
+                        searchResults.add(rest);
+                    }
                 }
             } while (cursor.moveToNext());
             cursor.close();
         }
 
-        // Si no hay resultados
-        if (searchResults.isEmpty()) {
-            Toast.makeText(this, "No se encontraron restaurantes", Toast.LENGTH_SHORT).show();
-        }
+        // --- ORDENAMIENTO AUTOMÁTICO POR CERCANÍA ---
+        Collections.sort(searchResults, (r1, r2) -> {
+            float[] res1 = new float[1];
+            float[] res2 = new float[1];
+            Location.distanceBetween(miLat, miLng, r1.getLat(), r1.getLng(), res1);
+            Location.distanceBetween(miLat, miLng, r2.getLat(), r2.getLng(), res2);
+            return Float.compare(res1[0], res2[0]);
+        });
 
-        // Actualizar la lista visual
         adapter.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 99 && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            obtenerUbicacionGPS();
+        }
     }
 }
