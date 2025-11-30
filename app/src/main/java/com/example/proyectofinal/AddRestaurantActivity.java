@@ -28,9 +28,23 @@ public class AddRestaurantActivity extends AppCompatActivity {
         etLng = findViewById(R.id.etLng);
         btnSave = findViewById(R.id.btnSaveRestaurant);
 
+        // --- BLOQUE NUEVO: RECIBIR COORDENADAS DEL MAPA (SI EXISTEN) ---
+        if (getIntent().hasExtra("LAT_SELECCIONADA")) {
+            double latRecibida = getIntent().getDoubleExtra("LAT_SELECCIONADA", 0.0);
+            double lngRecibida = getIntent().getDoubleExtra("LNG_SELECCIONADA", 0.0);
+
+            // Llenar los campos automáticamente
+            etLat.setText(String.valueOf(latRecibida));
+            etLng.setText(String.valueOf(lngRecibida));
+
+            Toast.makeText(this, "Coordenadas capturadas del mapa", Toast.LENGTH_SHORT).show();
+        }
+        // ---------------------------------------------------------------
+
         btnSave.setOnClickListener(v -> saveRestaurant());
     }
 
+    // --- ESTE ES EL MÉTODO QUE FALTABA ---
     private void saveRestaurant() {
         String name = etName.getText().toString().trim();
         String type = etType.getText().toString().trim();
@@ -53,7 +67,7 @@ public class AddRestaurantActivity extends AppCompatActivity {
 
             if (success) {
                 Toast.makeText(this, "Restaurante guardado con éxito", Toast.LENGTH_SHORT).show();
-                finish(); // Cierra esta pantalla y vuelve a la lista anterior
+                finish(); // Cierra esta pantalla y vuelve al mapa o lista
             } else {
                 Toast.makeText(this, "Error al guardar en la base de datos", Toast.LENGTH_SHORT).show();
             }
