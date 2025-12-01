@@ -20,6 +20,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import db.DatabaseHelper;
+
 public class AddReviewActivity extends AppCompatActivity {
 
     private static final int REQUEST_IMAGE_CAPTURE = 101;

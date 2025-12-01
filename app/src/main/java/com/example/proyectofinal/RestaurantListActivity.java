@@ -10,6 +10,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.ArrayList;
 import java.util.List;
 
+import db.DatabaseHelper;
+
 public class RestaurantListActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;

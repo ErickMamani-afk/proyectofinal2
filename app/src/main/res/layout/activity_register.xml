@@ -5,44 +5,43 @@
     android:orientation="vertical"
     android:padding="30dp"
     android:gravity="center"
-    android:background="#F5F5F5">
+    android:background="#E3F2FD">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Iniciar Sesión"
+        android:text="Crear Cuenta"
         android:textSize="30sp"
-        android:layout_marginBottom="40dp"
-        android:textStyle="bold"/>
+        android:textStyle="bold"
+        android:layout_marginBottom="40dp"/>
 
     <EditText
-        android:id="@+id/etUser"
+        android:id="@+id/etRegUser"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Usuario"
+        android:hint="Nombre de Usuario"
         android:layout_marginBottom="20dp"/>
 
     <EditText
-        android:id="@+id/etPass"
+        android:id="@+id/etRegPass"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Contraseña"
         android:inputType="textPassword"
+        android:layout_marginBottom="20dp"/>
+
+    <EditText
+        android:id="@+id/etRegConfirmPass"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Confirmar Contraseña"
+        android:inputType="textPassword"
         android:layout_marginBottom="30dp"/>
 
     <Button
-        android:id="@+id/btnLogin"
+        android:id="@+id/btnRegisterAction"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:text="Entrar"
-        android:backgroundTint="#2196F3"
-        android:layout_marginBottom="20dp"/>
-
-    <TextView
-        android:id="@+id/tvGoToRegister"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="¿No tienes cuenta? Regístrate aquí"
-        android:textColor="#2196F3"
-        android:textSize="16sp"/>
+        android:text="Registrarse"
+        android:backgroundTint="#4CAF50"/>
 </LinearLayout>

@@ -8,7 +8,7 @@ import android.text.Editable;
 import android.text.TextWatcher; // Importante para búsqueda en tiempo real
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -19,6 +19,8 @@ import com.google.android.gms.location.LocationServices;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import db.DatabaseHelper;
 
 public class SearchActivity extends AppCompatActivity {
 
