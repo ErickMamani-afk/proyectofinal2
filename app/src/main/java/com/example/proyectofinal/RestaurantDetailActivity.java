@@ -3,92 +3,76 @@ package com.example.proyectofinal;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.widget.Button;
 import android.widget.TextView;
-
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager; // Importante
-import androidx.recyclerview.widget.RecyclerView;     // Importante
-
-import java.util.List;
-
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import db.DatabaseHelper;
 
 public class RestaurantDetailActivity extends AppCompatActivity {
 
-    private TextView tvName, tvType, tvLocation;
-    private Button btnAddReview;
-    private RecyclerView rvReviews; // Nuevo
     private DatabaseHelper db;
-    private int restaurantId = -1;
+    private int restaurantId;
+    private TextView tvName, tvType, tvLoc;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_restaurant_detail);
-
         db = new DatabaseHelper(this);
 
+        restaurantId = getIntent().getIntExtra("REST_ID", -1);
         tvName = findViewById(R.id.tvDetailName);
         tvType = findViewById(R.id.tvDetailType);
-        tvLocation = findViewById(R.id.tvDetailLocation);
-        btnAddReview = findViewById(R.id.btnWriteReview);
-        rvReviews = findViewById(R.id.rvReviews); // Nuevo
+        tvLoc = findViewById(R.id.tvDetailLocation);
 
-        // Configurar RecyclerView
-        rvReviews.setLayoutManager(new LinearLayoutManager(this));
+        cargarDatos();
 
-        if (getIntent().hasExtra("REST_ID")) {
-            restaurantId = getIntent().getIntExtra("REST_ID", -1);
-            cargarDatosRestaurante(restaurantId);
-        }
+        // Configurar lista de reseñas
+        RecyclerView rv = findViewById(R.id.rvReviews);
+        rv.setLayoutManager(new LinearLayoutManager(this));
 
-        btnAddReview.setOnClickListener(v -> {
-            Intent intent = new Intent(RestaurantDetailActivity.this, AddReviewActivity.class);
-            intent.putExtra("REST_ID_PARA_RESENA", restaurantId);
-            startActivity(intent);
+        // Botón "Escribir Reseña"
+        findViewById(R.id.btnWriteReview).setOnClickListener(v -> {
+            Intent i = new Intent(this, AddReviewActivity.class);
+            i.putExtra("REST_ID_PARA_RESENA", restaurantId);
+            startActivity(i);
         });
     }
 
-    // Usamos onResume para recargar las reseñas si el usuario acaba de agregar una
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (restaurantId != -1) {
-            cargarResenas(restaurantId);
+    @Override protected void onResume() { super.onResume(); cargarResenas(); }
+
+    private void cargarDatos() {
+        Cursor c = db.getReadableDatabase().rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_REST + " WHERE id=" + restaurantId, null);
+        if (c.moveToFirst()) {
+            tvName.setText(c.getString(c.getColumnIndex(DatabaseHelper.COL_NOMBRE)));
+            tvType.setText(c.getString(c.getColumnIndex(DatabaseHelper.COL_TIPO)));
+            tvLoc.setText("GPS: " + c.getDouble(c.getColumnIndex(DatabaseHelper.COL_LAT)) + ", " + c.getDouble(c.getColumnIndex(DatabaseHelper.COL_LNG)));
         }
+        c.close();
+        cargarResenas();
     }
 
-    private void cargarDatosRestaurante(int id) {
-        Cursor cursor = db.getReadableDatabase().rawQuery(
-                "SELECT * FROM " + DatabaseHelper.TABLE_REST + " WHERE " + DatabaseHelper.COL_ID + " = ?",
-                new String[]{String.valueOf(id)}
-        );
-
-        if (cursor != null && cursor.moveToFirst()) {
-            int nameIndex = cursor.getColumnIndex(DatabaseHelper.COL_NOMBRE);
-            int typeIndex = cursor.getColumnIndex(DatabaseHelper.COL_TIPO);
-            int latIndex = cursor.getColumnIndex(DatabaseHelper.COL_LAT);
-            int lngIndex = cursor.getColumnIndex(DatabaseHelper.COL_LNG);
-
-            if (nameIndex != -1) {
-                tvName.setText(cursor.getString(nameIndex));
-                tvType.setText("Tipo: " + cursor.getString(typeIndex));
-                tvLocation.setText("Ubicación: " + cursor.getDouble(latIndex) + ", " + cursor.getDouble(lngIndex));
-            }
-            cursor.close();
-
-            // Cargar las reseñas también
-            cargarResenas(id);
-        }
-    }
-
-    private void cargarResenas(int id) {
-        List<Review> lista = db.getReviewsByRestaurant(id);
-        if (lista.isEmpty()) {
-            // Opcional: Mostrar mensaje si no hay reseñas
-        }
-        ReviewAdapter adapter = new ReviewAdapter(lista);
-        rvReviews.setAdapter(adapter);
+    private void cargarResenas() {
+        // Obtenemos reseñas y configuramos el "Long Click" para editar/borrar
+        ReviewAdapter adapter = new ReviewAdapter(db.getReviewsByRestaurant(restaurantId), review -> {
+            new AlertDialog.Builder(this)
+                    .setTitle("Opciones")
+                    .setItems(new String[]{"Editar", "Borrar"}, (dialog, which) -> {
+                        if (which == 0) { // Editar
+                            Intent i = new Intent(this, EditReviewActivity.class);
+                            i.putExtra("ID", review.getId());
+                            i.putExtra("COMMENT", review.getComentario());
+                            i.putExtra("RATING", review.getRating());
+                            i.putExtra("PHOTO", review.getFotoUri());
+                            startActivity(i);
+                        } else { // Borrar
+                            db.deleteReview(review.getId());
+                            cargarResenas(); // Refrescar
+                        }
+                    }).show();
+        });
+        ((RecyclerView)findViewById(R.id.rvReviews)).setAdapter(adapter);
     }
 }

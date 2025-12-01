@@ -9,21 +9,27 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import java.io.File; // Importante para verificar si el archivo existe
+import java.io.File;
 import java.util.List;
 
 public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewViewHolder> {
 
     private List<Review> reviewList;
+    private OnReviewLongClickListener listener; // Interfaz para comunicar el clic
 
-    public ReviewAdapter(List<Review> reviewList) {
+    // Interfaz creada por nosotros
+    public interface OnReviewLongClickListener {
+        void onReviewLongClick(Review review);
+    }
+
+    public ReviewAdapter(List<Review> reviewList, OnReviewLongClickListener listener) {
         this.reviewList = reviewList;
+        this.listener = listener;
     }
 
     @NonNull
     @Override
     public ReviewViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Inflamos el diseño de la fila (item_review.xml)
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_review, parent, false);
         return new ReviewViewHolder(view);
     }
@@ -32,35 +38,27 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewView
     public void onBindViewHolder(@NonNull ReviewViewHolder holder, int position) {
         Review review = reviewList.get(position);
 
-        // 1. Asignar Texto y Estrellas
         holder.tvComment.setText(review.getComentario());
         holder.ratingBar.setRating(review.getRating());
 
-        // 2. Lógica de la Foto (Solo se declara una vez)
         String photoPath = review.getFotoUri();
-
-        // Verificamos si hay ruta, si no está vacía y si el archivo existe en el celular
-        if (photoPath != null && !photoPath.isEmpty()) {
-            File imgFile = new File(photoPath);
-            if (imgFile.exists()) {
-                holder.ivPhoto.setVisibility(View.VISIBLE);
-                holder.ivPhoto.setImageURI(Uri.parse(photoPath));
-            } else {
-                // Si la ruta existe pero el archivo no (se borró), ocultamos la imagen
-                holder.ivPhoto.setVisibility(View.GONE);
-            }
+        if (photoPath != null && !photoPath.isEmpty() && new File(photoPath).exists()) {
+            holder.ivPhoto.setVisibility(View.VISIBLE);
+            holder.ivPhoto.setImageURI(Uri.parse(photoPath));
         } else {
-            // Si no hay ruta, ocultamos la imagen
             holder.ivPhoto.setVisibility(View.GONE);
         }
+
+        // DETECTAR CLIC LARGO
+        holder.itemView.setOnLongClickListener(v -> {
+            listener.onReviewLongClick(review); // Avisamos a la Activity
+            return true;
+        });
     }
 
     @Override
-    public int getItemCount() {
-        return reviewList.size();
-    }
+    public int getItemCount() { return reviewList.size(); }
 
-    // Clase interna para vincular con el XML
     static class ReviewViewHolder extends RecyclerView.ViewHolder {
         TextView tvComment;
         RatingBar ratingBar;
