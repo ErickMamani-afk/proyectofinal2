@@ -9,13 +9,15 @@ public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_splash);
+        setContentView(R.layout.activity_splash); // Carga el XML con el logo
 
-        // Esperar 3 segundos y pasar al Login
+        // Handler permite ejecutar código después de un tiempo (3000ms = 3 seg)
         new Handler().postDelayed(() -> {
+            // Creamos el Intent para ir al Login
             Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
             startActivity(intent);
-            finish(); // Matar esta activity para que no se pueda volver atrás
+            // 'finish()' cierra el Splash para que el usuario no pueda volver atrás
+            finish();
         }, 3000);
     }
 }
