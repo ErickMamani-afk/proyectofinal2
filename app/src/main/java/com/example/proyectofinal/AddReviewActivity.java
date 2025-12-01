@@ -1,89 +1,62 @@
 package com.example.proyectofinal;
 
-import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RatingBar;
-import android.widget.Toast;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
+import java.io.File;
+import java.io.FileOutputStream;
+import db.DatabaseHelper;
 
 public class AddReviewActivity extends AppCompatActivity {
 
-    private static final int REQUEST_IMAGE_CAPTURE = 101;
-    private ImageView imageViewFoto;
-    private EditText etComentario;
-    private RatingBar ratingBar;
-    private Button btnTomarFoto, btnGuardar;
+    private String fotoPathReal = "";
+    private int restId;
     private DatabaseHelper db;
-
-    // ID del restaurante que estamos reseñando (Debería venir por Intent)
-    private int currentRestaurantId = 1;
-    private String fotoPathTemp = ""; // Simulación de ruta de archivo
+    private ImageView imgPreview;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add_review); // Recuerda crear este layout XML
-
+        setContentView(R.layout.activity_add_review);
         db = new DatabaseHelper(this);
+        restId = getIntent().getIntExtra("REST_ID_PARA_RESENA", -1);
+        imgPreview = findViewById(R.id.imageViewFoto);
 
-        // Referencias a la UI (Asegúrate que los IDs coincidan en tu XML)
-        imageViewFoto = findViewById(R.id.imageViewFoto);
-        etComentario = findViewById(R.id.etComentario);
-        ratingBar = findViewById(R.id.ratingBar);
-        btnTomarFoto = findViewById(R.id.btnTomarFoto);
-        btnGuardar = findViewById(R.id.btnGuardar);
+        // Botón Cámara
+        findViewById(R.id.btnTomarFoto).setOnClickListener(v ->
+                startActivityForResult(new Intent(MediaStore.ACTION_IMAGE_CAPTURE), 101)
+        );
 
-        // Lógica de la Cámara
-        btnTomarFoto.setOnClickListener(v -> {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-                    != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 100);
-            } else {
-                abrirCamara();
-            }
-        });
+        // Botón Guardar
+        findViewById(R.id.btnGuardar).setOnClickListener(v -> {
+            String comment = ((EditText)findViewById(R.id.etComentario)).getText().toString();
+            float rating = ((RatingBar)findViewById(R.id.ratingBar)).getRating();
 
-        // Guardar en BD
-        btnGuardar.setOnClickListener(v -> {
-            String comentario = etComentario.getText().toString();
-            float rating = ratingBar.getRating();
-
-            boolean exito = db.addReview(currentRestaurantId, comentario, rating, fotoPathTemp);
-            if(exito){
-                Toast.makeText(this, "Reseña guardada correctamente", Toast.LENGTH_SHORT).show();
-                finish();
-            } else {
-                Toast.makeText(this, "Error al guardar", Toast.LENGTH_SHORT).show();
-            }
+            db.addReview(restId, comment, rating, fotoPathReal);
+            finish();
         });
     }
 
-    private void abrirCamara() {
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-        }
-    }
+    // Procesar foto de la cámara
+    @Override protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req == 101 && res == RESULT_OK) {
+            Bitmap bitmap = (Bitmap) data.getExtras().get("data");
+            imgPreview.setImageBitmap(bitmap);
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            imageViewFoto.setImageBitmap(imageBitmap);
-            // Aquí deberías guardar el bitmap en el almacenamiento interno y obtener la ruta real
-            fotoPathTemp = "ruta/ficticia/imagen.jpg";
+            // Guardar archivo físico
+            try {
+                File file = new File(getFilesDir(), "IMG_" + System.currentTimeMillis() + ".jpg");
+                FileOutputStream fos = new FileOutputStream(file);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+                fos.close();
+                fotoPathReal = file.getAbsolutePath();
+            } catch (Exception e) { e.printStackTrace(); }
         }
     }
 }
