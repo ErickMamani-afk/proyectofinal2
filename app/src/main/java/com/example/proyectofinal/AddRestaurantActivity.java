@@ -7,6 +7,8 @@ import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
+import db.DatabaseHelper;
+
 public class AddRestaurantActivity extends AppCompatActivity {
 
     private EditText etName, etType, etLat, etLng;

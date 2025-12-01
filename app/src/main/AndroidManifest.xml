@@ -7,13 +7,12 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <uses-feature
         android:name="android.hardware.camera"
         android:required="true" />
-
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -41,30 +40,41 @@
             android:exported="false" />
 
         <activity
+            android:name=".RegisterActivity"
+            android:exported="false"/>
+
+        <activity
             android:name=".MainActivity"
             android:exported="false" />
 
         <activity
             android:name=".SettingsActivity"
             android:exported="false" />
+
         <activity
             android:name=".ProfileActivity"
             android:exported="false" />
+
         <activity
             android:name=".RestaurantDetailActivity"
             android:exported="false" />
+
         <activity
             android:name=".AddRestaurantActivity"
             android:exported="false" />
+
         <activity
             android:name=".RestaurantListActivity"
             android:exported="false" />
+
         <activity
             android:name=".SearchActivity"
             android:exported="false" />
+
         <activity
             android:name=".MapsActivity"
             android:exported="false" />
+
         <activity
             android:name=".AddReviewActivity"
             android:exported="false" />

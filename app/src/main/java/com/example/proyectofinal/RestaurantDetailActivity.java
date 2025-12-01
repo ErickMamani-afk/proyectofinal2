@@ -5,12 +5,14 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager; // Importante
 import androidx.recyclerview.widget.RecyclerView;     // Importante
-import java.util.ArrayList;
+
 import java.util.List;
+
+import db.DatabaseHelper;
 
 public class RestaurantDetailActivity extends AppCompatActivity {
 
